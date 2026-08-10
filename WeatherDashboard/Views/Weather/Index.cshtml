@@ -1,0 +1,373 @@
+﻿@model WeatherDashboard.Models.WeatherViewModel?
+
+@{
+    ViewData["Title"] = "Weather Dashboard";
+
+var weather = Model;
+
+    var weatherClass = "weather-default";
+    var timeClass = weather?.IsDay == false ? "night" : "day";
+
+    if (weather != null)
+    {
+        var description = weather.Description.ToLowerInvariant();
+
+        if (description.Contains("thunderstorm"))
+        {
+            weatherClass = "weather-storm";
+        }
+        else if (
+            description.Contains("rain") ||
+            description.Contains("drizzle") ||
+            description.Contains("shower"))
+        {
+            weatherClass = "weather-rain";
+        }
+        else if (description.Contains("snow"))
+        {
+            weatherClass = "weather-snow";
+        }
+        else if (description.Contains("fog"))
+        {
+            weatherClass = "weather-fog";
+        }
+        else if (
+            description.Contains("cloud") ||
+            description.Contains("overcast"))
+        {
+            weatherClass = "weather-cloudy";
+        }
+        else if (
+            description.Contains("clear") ||
+            description.Contains("sun"))
+        {
+            weatherClass = "weather-sunny";
+        }
+    }
+
+}
+
+<div class="weather-page @weatherClass @timeClass">
+
+  
+    <!-- BACKGROUND -->
+
+    <div class="weather-background">
+
+        <div class="sun"></div>
+
+        <div class="moon"></div>
+
+        <div class="stars">
+            @for (var i = 0; i < 17; i++)
+            {
+                <span></span>
+            }
+        </div>
+
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+
+        <div class="rain">
+            @for (var i = 0; i < 20; i++)
+            {
+                <span></span>
+            }
+        </div>
+
+        <div class="snow">
+            @for (var i = 0; i < 10; i++)
+            {
+                <span></span>
+            }
+        </div>
+
+        <div class="lightning"></div>
+
+    </div>
+
+
+    <!-- MAIN CONTENT -->
+
+    <main class="weather-container">
+
+        <!-- HEADER -->
+
+        <header class="weather-header">
+
+            <div class="weather-label">
+                WEATHER DASHBOARD
+            </div>
+
+            <h1>
+                Weather
+            </h1>
+
+            <p>
+                Search for a city to see current weather conditions.
+            </p>
+
+        </header>
+
+
+        <!-- SEARCH -->
+
+        <form method="get"
+              asp-controller="Weather"
+              asp-action="Index"
+              class="weather-search">
+
+            <label for="city"
+                   class="visually-hidden">
+                City
+            </label>
+
+            <input id="city"
+                   name="city"
+                   value="@ViewBag.SearchCity"
+                   placeholder="Search for a city..."
+                   autocomplete="off"
+                   maxlength="100"
+                   spellcheck="false" />
+
+            <button type="submit">
+                Search
+            </button>
+
+        </form>
+
+
+        <!-- ERROR MESSAGE -->
+        @if (ViewData["Error"] != null)
+        {
+            <div class="weather-error"
+                 role="alert">
+
+                <span>⚠️</span>
+
+                <span>
+                    @ViewData["Error"]
+                </span>
+
+            </div>
+
+            <section class="weather-empty">
+
+                <div class="weather-empty-icon">
+                    🔎
+                </div>
+
+                <h2>
+                    Search for a city
+                </h2>
+
+                <p>
+                    Check the spelling and try another city.
+                </p>
+
+            </section>
+        }
+
+
+        <!-- WEATHER RESULTS -->
+        @if (weather != null)
+        {
+            <section class="weather-card">
+
+                <!-- LOCATION -->
+
+                <div class="weather-location">
+
+                    <h2>
+                        @weather.City
+                    </h2>
+
+                    <p>
+                        @weather.Country
+                    </p>
+
+                </div>
+
+
+                <!-- CURRENT WEATHER -->
+
+                <div class="weather-main">
+
+                    <div class="temperature">
+
+                        <span>
+                            @weather.Temperature.ToString("0")
+                        </span>
+
+                        <small>
+                            °C
+                        </small>
+
+                    </div>
+
+
+                    <div class="weather-description">
+
+                        <div class="current-weather-icon">
+                            @weather.Icon
+                        </div>
+
+                        <h3>
+                            @weather.Description
+                        </h3>
+
+                        <p>
+                            Feels like
+                            @weather.FeelsLike.ToString("0")°C
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- WEATHER DETAILS -->
+
+                <div class="weather-details">
+
+                    <div class="weather-detail">
+
+                        <span class="detail-label">
+                            HUMIDITY
+                        </span>
+
+                        <strong>
+                            💧 @weather.Humidity%
+                        </strong>
+
+                    </div>
+
+
+                    <div class="weather-detail">
+
+                        <span class="detail-label">
+                            WIND
+                        </span>
+
+                        <strong>
+                            💨 @weather.WindSpeed.ToString("0.0") km/h
+                        </strong>
+
+                    </div>
+
+
+                    <div class="weather-detail">
+
+                        <span class="detail-label">
+                            PRESSURE
+                        </span>
+
+                        <strong>
+                            🌡️ @weather.Pressure.ToString("0") hPa
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- FORECAST -->
+            @if (weather.Forecast != null && weather.Forecast.Any())
+            {
+                var nextSevenDays = weather.Forecast
+                .Where(day => day.Date.Date > DateTime.Now.Date)
+                .Take(7)
+                .ToList();
+
+                @if (nextSevenDays.Any())
+                {
+                    <section class="forecast-section">
+
+                        <div class="section-label">
+                            NEXT 7 DAYS
+                        </div>
+
+                        <h2>
+                            Forecast
+                        </h2>
+
+                        <div class="forecast-grid">
+
+                            @foreach (var day in nextSevenDays)
+                            {
+                                <article class="forecast-card">
+
+                                    <div class="forecast-date">
+
+                                        <strong>
+                                            @day.Date.ToString("ddd")
+                                        </strong>
+
+                                        <br />
+
+                                        @day.Date.ToString("dd MMM")
+
+                                    </div>
+
+
+                                    <div class="forecast-icon">
+                                        @day.Icon
+                                    </div>
+
+
+                                    <div class="forecast-description">
+                                        @day.Description
+                                    </div>
+
+
+                                    <div class="forecast-temperatures">
+
+                                        <span class="forecast-high">
+                                            @day.MaxTemperature.ToString("0")°
+                                        </span>
+
+                                        <span class="forecast-low">
+                                            @day.MinTemperature.ToString("0")°
+                                        </span>
+
+                                    </div>
+
+                                </article>
+                            }
+
+                        </div>
+
+                    </section>
+                }
+            }
+        }
+
+
+        <!-- NO WEATHER / FIRST LOAD -->
+        @if (weather == null && ViewData["Error"] == null)
+        {
+            <section class="weather-empty">
+
+                <div class="weather-empty-icon">
+                    ☀️
+                </div>
+
+                <h2>
+                    Search for a city
+                </h2>
+
+                <p>
+                    Enter a city above to get the latest
+                    weather information.
+                </p>
+
+            </section>
+        }
+
+    </main>
+   
+
+</div>
